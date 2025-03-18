@@ -1,0 +1,12 @@
+flask
+jinja2
+pandas
+numpy
+matplotlib
+seaborn
+logging
+scikit-learn
+shap
+tensorflow
+optuna
+joblib==1.4.2
