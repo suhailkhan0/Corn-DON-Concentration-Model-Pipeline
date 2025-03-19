@@ -58,6 +58,11 @@ By default, the application runs at: **http://127.0.0.1:5000/**
 This project uses Python's `logging` module to track runtime details and errors.
 - **Log file:** `app.log`
 - **Logging Levels:** INFO, ERROR
+  ```sh
+  npm install --save-dev jest
+  npx jest test.js
+  ```
+  
 
 ## **Frontend Features**
 - **Table Toggling:** Show/hide extra rows dynamically.
