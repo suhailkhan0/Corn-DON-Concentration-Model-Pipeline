@@ -6,6 +6,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import seaborn as sns
+from scikeras.wrappers import KerasRegressor
+from tensorflow.keras.models import Sequential, load_model
 import base64
 from flask import Flask, request, render_template
 from io import BytesIO
@@ -18,7 +20,7 @@ logging.basicConfig(level=logging.INFO)
 app = Flask(__name__)
 
 # Load the model
-model = joblib.load(open("model.pkl", "rb"))
+model = load_model("best_ann_model.h5")
 
 # Define a directory to save the processed files
 PROCESSED_DIR = 'processed_data'
@@ -46,13 +48,13 @@ def create_spectral_indices(df):
 
 def apply_pca(df):
     """Apply PCA to the data."""
-    pca = PCA(n_components=min(10, df.shape[1]))  # Ensure we don't select more components than available
+    final_df = df[["NDSI_1","NDSI_2","NDSI_3"]]
+    pca = PCA(n_components=min(50, df.shape[1]))  # Ensure we don't select more components than available
     pca_result = pca.fit_transform(df)
+    for i in range(min(50, df.shape[1])):
+        final_df[f"PCA_{i+1}"] = pca_result[:, i]
     
-    for i in range(pca_result.shape[1]):
-        df[f"PCA_{i+1}"] = pca_result[:, i]
-    
-    return df
+    return final_df
 
 @app.route("/")
 def home():
@@ -95,13 +97,14 @@ def predict():
     pca_df = apply_pca(df_with_indices)
 
     # Make predictions
-    if pca_df.shape[1] != model.n_features_in_:
-        return f"Model expects {model.n_features_in_} features, but got {pca_df.shape[1]}", 400
+    if pca_df.shape[1] != model.input_shape[1]:
+        return f"Model expects {model.input_shape[1]} features, but got {pca_df.shape[1]}", 400
 
     original_prediction = model.predict(pca_df)
+    print('1')
 
     # Calculate residuals
-    residuals = original_target.values - original_prediction
+    residuals = original_target.values - original_prediction.flat
 
     # Plot residuals and predictions vs actual
     plt.figure(figsize=(18, 12))
@@ -120,6 +123,7 @@ def predict():
     plt.title('Predicted vs Actual')
     plt.xlabel('Actual')
     plt.ylabel('Predicted')
+    print('Done')
 
     # Save plot as bytes
     img = BytesIO()
@@ -130,7 +134,7 @@ def predict():
     # Encode image in base64
     img_data = base64.b64encode(img.getvalue()).decode("utf-8")
 
-    return render_template('result.html', predictions=original_prediction, actual=original_target, residuals=residuals, img_data=img_data)
+    return render_template('result.html', predictions=original_prediction.flat, actual=original_target, residuals=residuals, img_data=img_data)
 
 if __name__ == '__main__':
     app.run(debug=True)
