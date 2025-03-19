@@ -9,4 +9,5 @@ scikit-learn
 shap
 tensorflow
 optuna
+scikeras
 joblib==1.4.2
