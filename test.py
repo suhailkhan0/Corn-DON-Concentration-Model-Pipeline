@@ -10,4 +10,4 @@ def client():
 def test_home_page(client):
     response = client.get("/")
     assert response.status_code == 200
-    assert b"Prediction Results" in response.data
+    assert b"DON Concentration Prediction Dashboard" in response.data
